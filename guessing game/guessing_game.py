@@ -1,73 +1,100 @@
-from random import randint
 import datetime
 import os
+from pathlib import Path
+from random import randint
+
+
+# TODO include other option like score board etc here.
 
 
 def game():
-	while True:
-		computer_guess = randint(1, 100)
-		result = guess(computer_guess)
+    while True:
+        computer_guess = randint(1, 100)
+        result = guess(computer_guess)
 
-		record_score(result)
+        print("The number was {}".format(computer_guess))
 
-		if input("want to continue? ").lower() == 'n':	#in order ro exit press anything except 'n'
-			break
+        record_score(result)
+
+        # in order ro exit press anything except 'n'
+        try:
+            if input("Play again? ").lower() == 'n':
+                break
+        except ValueError:
+            print("you pressed some value. Considered default value NO")
+            break
 
 
 def record_score(current_score_and_date):
-	print(current_score_and_date)
-	try:
-		score_record = open("score_record.txt", 'a')
-		high_score = open("high_score.txt", 'r')
+    print("\n\n--------------- Game Over ---------------\n\n")
+    print("Your Score is " + current_score_and_date.split()[0])
 
-	except FileNotFoundError:
-		print("File is missing. Better create it")
+    # if file doesn't exists
+    if not Path("score_record.txt").is_file():
+        with open('score_record.txt', 'w') as score_record:
+            score_record.write(current_score_and_date)
 
-	else:
-		score_record.write("\n" + current_score_and_date)
+    # following code will ensure that only last 10 results are saved
+    with open('score_record.txt', 'r') as score_record:
+        all_scores_in_the_record = score_record.readlines()
 
-		#if file doesn't have any score
-		if os.stat("high_score.txt").st_size == 0:
-			high_score.write(current_score_and_date)
+    all_scores_in_the_record.insert(0, current_score_and_date + '\n')
 
-		else:
-			current_high_score_and_date = high_score.read()
+    if len(all_scores_in_the_record) > 10:
+        with open('score_record.txt', 'w') as score_record:
+            for item in all_scores_in_the_record[:10]:
+                score_record.write(item)
 
-			if int(current_score_and_date.split("		")[0]) > int(current_high_score_and_date.split("		")[0]):
-				high_score.close()
-				high_score = open("high_score.txt", 'w')	#because r+ is not working
-				high_score.write(current_score_and_date)
+    else:
+        with open('score_record.txt', 'w') as score_record:
+            for item in all_scores_in_the_record:
+                score_record.write(item)
 
-	finally:
-		score_record.close()
-		high_score.close()
+    # if file doesn't exists
+    if not Path("high_score.txt").is_file():
+        with open('high_score.txt', 'w') as high_score:
+            high_score.write(current_score_and_date)
+            return None
 
+    if os.stat('high_score.txt').st_size == 0:
+        with open('high_score.txt', 'w') as high_score:
+            high_score.write(current_score_and_date)
+            return None
 
-#record_score(256, datetime.datetime.now())
+    with open('high_score.txt', 'r') as high_score:
+        current_high_score_and_date = high_score.read()
+
+    if int(current_score_and_date.split()[0]) > int(current_high_score_and_date.split()[0]):
+        with open('high_score.txt', 'w') as high_score:
+            high_score.write(current_score_and_date)
 
 
 def guess(computer_guess):
-	guess_counter = 50
+    guess_counter = 10
 
-	while guess_counter > 0:
+    while guess_counter > 0:
 
-		print("chances left {}" .format(guess_counter))
-		user_choice = int(input("guess the number: "))
+        try:
+            print("chances left {}".format(guess_counter))
+            user_choice = int(input("guess the number: "))
 
-		print("\n\n ------------------------------------------ \n\n")
-		if user_choice > computer_guess:
-			print("you are a bit too high...")
+            print("\n\n------------------------------------------\n\n")
+            if user_choice > computer_guess:
+                print("your guess is high")
 
-		elif user_choice < computer_guess:
-			print("you are a bit too low...")
+            elif user_choice < computer_guess:
+                print("your guess is low...")
 
-		else:
-			print("bravo! you guessed the number.")
-			break
+            else:
+                print("bravo! you guessed the number.")
+                break
 
-		guess_counter -= 1
+            guess_counter -= 1
 
-	return "{}		{}" .format(guess_counter, str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        except ValueError:
+            continue
+
+    return "{}		{}".format(guess_counter, str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
 
 
 game()
